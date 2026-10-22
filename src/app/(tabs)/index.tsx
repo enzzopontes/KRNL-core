@@ -124,7 +124,12 @@ export default function DashboardScreen() {
               onPress={() => router.push('/apps')}
             />
             <HudButton
-              label="[4] PERMISSÕES"
+              label="[4] SEGURANCA // AUDIT"
+              variant="secondary"
+              onPress={() => router.push('/security')}
+            />
+            <HudButton
+              label="[5] PERMISSÕES"
               variant="secondary"
               onPress={() => router.push('/onboarding')}
             />

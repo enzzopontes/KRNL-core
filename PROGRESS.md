@@ -1,19 +1,18 @@
 # KRNL Core — Progresso do Desenvolvimento
 
-## Status do Projeto: AUDITORIA E FECHAMENTO CONCLUÍDOS
+## Status: RODADA 2 CONCLUÍDA
 
-Todas as fases (1 a 6) foram implementadas, auditadas e verificadas com builds nativos e testes unitários.
+### Fases Concluídas e Refinadas
+- [x] **Fase 1 — Fundação**: Expo 57, HUD Design Tokens, Skia Gauges, anel com fórmula aberta, acessibilidade e suporte i18n PT-BR/EN.
+- [x] **Fase 2 — Armazenamento**: Módulo Kotlin `KrnlStorageModule`, Treemap de disco em Skia, scanner de lixo com modo simulação (dry-run) e quarentena via `renameTo`.
+- [x] **Fase 3 — Duplicadas**: Algoritmo nativo 3-stage com xxHash64 (início/meio/fim e completo), dHash perceptual 64-bit para fotos, aviso para Android 14+ de fotos parciais.
+- [x] **Fase 4 — Apps e Segurança**: Gerenciador de Apps com `UsageStats`, inatividade 30/60/90 dias, debloater seguro com listas curadas no Supabase e trava rígida de kernel/SystemUI.
+- [x] **Fase 5 — Automação e Avançado**: WorkManager periódico com restrição a carregamento + Wi-Fi. Desacoplamento físico do código Shizuku entre `src/direct` e `src/play`.
+- [x] **Fase 6 — Conta e Cobrança**: Supabase RLS restritivo (`licenses` com SELECT exclusivo pelo dono), validação HMAC `x-signature` e verificação na API do Mercado Pago no webhook.
 
-### Fases Concluídas
-- [x] **Fase 1 — Fundação**: Expo 57, Design System HUD (tokens MMKV + Zustand), Skia Gauges, anel de saúde com fórmula visível, navegação Expo Router e onboarding de permissões transparente.
-- [x] **Fase 2 — Armazenamento**: Módulo Kotlin `KrnlStorageModule`, Treemap de disco em Skia, scanner com modo simulação (dry-run) obrigatório e lixeira interna com quarentena via `renameTo`.
-- [x] **Fase 3 — Duplicadas**: Módulo Kotlin `KrnlDuplicatesModule`, 3-stage hash (tamanho -> parcial 16KB início/meio/fim -> completo), dHash perceptual 64-bit para fotos semelhantes e comparação lado a lado.
-- [x] **Fase 4 — Apps e Segurança**: Módulo Kotlin `KrnlAppsModule`, listagem com UsageStats, identificação de inatividade (30+ dias), debloater seguro com fluxo do sistema e pacotes de kernel travados no código.
-- [x] **Fase 5 — Automação e Avançado**: Módulo Kotlin `KrnlAdvancedModule` com WorkManager semanal restrito a carregamento + Wi-Fi. Shizuku isolado exclusivamente no flavor `direct`.
-- [x] **Fase 6 — Conta e Cobrança**: Schema SQL no Supabase com Row Level Security (RLS) aplicado no banco remoto, Edge Functions de checkout Mercado Pago e webhook idempotente, tela de assinatura side-by-side com Google Play Billing.
-
-### Auditoria e Validações
-- [x] Build Android `play` (com.krnl.core) compilado em debug com sucesso via Gradle.
-- [x] Build Android `direct` (com.krnl.core.direct) compilado em debug com sucesso via Gradle.
-- [x] 100% de passagem nos testes unitários Jest (fórmula de saúde, duplicadas, lixeira, cache de licença, idempotência).
-- [x] Sincronização remota via Git com o repositório `enzzopontes/KRNL-core`.
+### Validações da Rodada 2
+- [x] Compilação do Android App Bundle (`bundleRelease`) gerado com sucesso com R8 / Proguard ativado (106.5 MB contendo as 4 arquiteturas completas).
+- [x] Decomposição do AAB: cada ABI individual comprimida para download possui ~10 a 12 MB (atendendo à meta de < 25 MB por dispositivo).
+- [x] 100% de passagem nos testes unitários Jest (9/9 testes passando).
+- [x] Varredura de segurança contra vazamento de segredos no histórico Git.
+- [x] TODO_HUMANO.md detalhado com políticas da Play Store (QUERY_ALL_PACKAGES, Data Safety, faturamento alternativo).

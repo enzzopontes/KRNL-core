@@ -13,11 +13,6 @@ class KrnlAdvancedModule : Module() {
   override fun definition() = ModuleDefinition {
     Name("KrnlAdvancedModule")
 
-    /**
-     * Agenda rotina semanal no WorkManager:
-     * - Apenas enquanto carrega na tomada (requiresCharging)
-     * - Apenas conectado ao Wi-Fi (requiresUnmeteredNetwork)
-     */
     AsyncFunction("scheduleWeeklyMaintenance") {
       val constraints = Constraints.Builder()
         .setRequiresCharging(true)
@@ -38,35 +33,12 @@ class KrnlAdvancedModule : Module() {
 
       true
     }
-
-    /**
-     * Flavor direct apenas: Execução via Shizuku (pm uninstall -k --user 0)
-     */
-    AsyncFunction("executeShizukuDebloat") { packageName: String ->
-      // Execução isolada apenas para usuário 0
-      mapOf(
-        "success" to true,
-        "command" to "pm uninstall -k --user 0 $packageName",
-        "user" to 0
-      )
-    }
-
-    /**
-     * Flavor direct apenas: Restauração via Shizuku (cmd package install-existing)
-     */
-    AsyncFunction("restorePackageShizuku") { packageName: String ->
-      mapOf(
-        "success" to true,
-        "command" to "cmd package install-existing $packageName"
-      )
-    }
   }
 }
 
 class KrnlMaintenanceWorker(appContext: Context, workerParams: WorkerParameters) :
   Worker(appContext, workerParams) {
   override fun doWork(): Result {
-    // Rotina leve de background executada conforme restrições
     return Result.success()
   }
 }

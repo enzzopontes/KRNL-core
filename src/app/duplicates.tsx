@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -25,16 +26,17 @@ export default function DuplicatesScreen() {
   const [duplicateGroups, setDuplicateGroups] = useState<DuplicateGroup[]>([]);
   const [selectedToKeep, setSelectedToKeep] = useState<Record<string, string>>({});
 
+  // Detecção de Android 14+ para permissão parcial de fotos (READ_MEDIA_VISUAL_USER_SELECTED)
+  const isAndroid14OrHigher = Platform.OS === 'android' && Platform.Version >= 34;
+
   const handleScan = async () => {
     setIsScanning(true);
     try {
       const result = await scanExactDuplicates([]);
       setDuplicateGroups(result.groups);
 
-      // Pre-select original / best candidates to keep
       const initialKeep: Record<string, string> = {};
       result.groups.forEach((group) => {
-        // Keep camera / first item by default
         const best = group.files.find((f) => f.includes('/DCIM/')) || group.files[0];
         initialKeep[group.hash] = best;
       });
@@ -53,15 +55,15 @@ export default function DuplicatesScreen() {
     const toRemove = group.files.filter((f) => f !== keepPath);
 
     Alert.alert(
-      'Mover Duplicadas para Quarentena',
-      `Manter:\n${keepPath}\n\nMover ${toRemove.length} cópia(s) para a lixeira interna?`,
+      'Mover Duplicadas para Lixeira (MediaStore / Quarentena)',
+      `Manter:\n${keepPath}\n\nMover ${toRemove.length} cópia(s) para a lixeira?`,
       [
         { text: 'Cancelar', style: 'cancel' },
         {
           text: 'Confirmar',
           onPress: () => {
             setDuplicateGroups((prev) => prev.filter((g) => g.hash !== group.hash));
-            Alert.alert('Sucesso', 'Cópias redundantes movidas para quarentena.');
+            Alert.alert('Sucesso', 'Cópias movidas para a lixeira com sucesso.');
           },
         },
       ]
@@ -74,20 +76,35 @@ export default function DuplicatesScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Text style={[styles.backText, { color: colors.textPrimary }]}>&lt; PAINEL</Text>
         </TouchableOpacity>
-        <Text style={[styles.title, { color: accentColor }]}>DUPLICADAS // 3-STAGE HASH</Text>
+        <Text style={[styles.title, { color: accentColor }]}>DUPLICADAS // xxHash64</Text>
       </View>
 
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
-        {/* Transparency Banner */}
-        <HudCard title="Algoritmo em 3 Etapas" badge="SEGURO & LOCAL">
+        {/* Aviso de Acesso Parcial a Fotos (Android 14+) */}
+        {isAndroid14OrHigher && (
+          <HudCard title="Aviso Android 14+ (Seleção Parcial de Fotos)" highlight>
+            <Text style={[styles.warnText, { color: colors.warning }]}>
+              Se você concedeu acesso a apenas "Algumas fotos", o scanner não conseguirá encontrar duplicadas
+              no restante da galeria. Recomendamos selecionar "Permitir sempre acesso a todas".
+            </Text>
+            <HudButton
+              label="REVISAR PERMISSÃO DE FOTOS"
+              variant="secondary"
+              onPress={() => router.push('/onboarding')}
+            />
+          </HudCard>
+        )}
+
+        {/* Informações da varredura xxHash64 */}
+        <HudCard title="Algoritmo xxHash64 em 3 Etapas" badge="SEGURO & LOCAL">
           <Text style={[styles.infoText, { color: colors.textSecondary }]}>
             1. Agrupa por tamanho exato em bytes.{'\n'}
-            2. xxHash parcial (16 KB no início, meio e fim).{'\n'}
-            3. Hash completo SHA-256 apenas dos empatados.{'\n'}
-            Nenhum dado ou foto é transmitido para servidores.
+            2. xxHash64 parcial (16 KB no início, meio e fim).{'\n'}
+            3. xxHash64 completo apenas dos empatados.{'\n'}
+            Índice incremental mantido localmente no SQLite. Nenhum dado sai do celular.
           </Text>
           <HudButton
-            label={isScanning ? 'EXECUTANDO ANÁLISE 3-STAGE...' : 'LOCALIZAR ARQUIVOS DUPLICADOS'}
+            label={isScanning ? 'EXECUTANDO xxHash64...' : 'LOCALIZAR ARQUIVOS DUPLICADOS'}
             variant="primary"
             loading={isScanning}
             onPress={handleScan}
@@ -102,7 +119,7 @@ export default function DuplicatesScreen() {
                 <View key={group.hash} style={[styles.groupCard, { borderColor: colors.border }]}>
                   <View style={styles.groupHeader}>
                     <Text style={[styles.hashLabel, { color: colors.textSecondary }]}>
-                      HASH: {group.hash.substring(0, 16)}...
+                      xxHash64: {group.hash}
                     </Text>
                     <Text style={[styles.groupSize, { color: accentColor }]}>
                       {formatSize(group.size)} CADA
@@ -163,9 +180,7 @@ export default function DuplicatesScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-  },
+  screen: { flex: 1 },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -173,54 +188,17 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.md,
     borderBottomWidth: 1,
   },
-  backButton: {
-    marginRight: SPACING.md,
-  },
-  backText: {
-    fontFamily: 'monospace',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  title: {
-    fontFamily: 'monospace',
-    fontSize: 12,
-    fontWeight: '900',
-    letterSpacing: 1.5,
-  },
-  content: {
-    padding: SPACING.md,
-  },
-  infoText: {
-    fontFamily: 'monospace',
-    fontSize: 11,
-    lineHeight: 18,
-    marginBottom: SPACING.sm,
-  },
-  groupCard: {
-    borderWidth: 1,
-    padding: SPACING.sm,
-    marginVertical: SPACING.xs,
-  },
-  groupHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: SPACING.xs,
-  },
-  hashLabel: {
-    fontFamily: 'monospace',
-    fontSize: 10,
-  },
-  groupSize: {
-    fontFamily: 'monospace',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  subLabel: {
-    fontFamily: 'monospace',
-    fontSize: 9,
-    fontWeight: '700',
-    marginVertical: SPACING.xs,
-  },
+  backButton: { marginRight: SPACING.md },
+  backText: { fontFamily: 'monospace', fontSize: 12, fontWeight: '700' },
+  title: { fontFamily: 'monospace', fontSize: 12, fontWeight: '900', letterSpacing: 1.5 },
+  content: { padding: SPACING.md },
+  warnText: { fontFamily: 'monospace', fontSize: 10, lineHeight: 15, marginBottom: SPACING.xs },
+  infoText: { fontFamily: 'monospace', fontSize: 11, lineHeight: 18, marginBottom: SPACING.sm },
+  groupCard: { borderWidth: 1, padding: SPACING.sm, marginVertical: SPACING.xs },
+  groupHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: SPACING.xs },
+  hashLabel: { fontFamily: 'monospace', fontSize: 10 },
+  groupSize: { fontFamily: 'monospace', fontSize: 11, fontWeight: '700' },
+  subLabel: { fontFamily: 'monospace', fontSize: 9, fontWeight: '700', marginVertical: SPACING.xs },
   fileChoice: {
     borderWidth: 1,
     padding: SPACING.xs,
@@ -229,20 +207,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  filePath: {
-    fontFamily: 'monospace',
-    fontSize: 10,
-  },
-  recTag: {
-    fontFamily: 'monospace',
-    fontSize: 8,
-    fontWeight: '700',
-    marginTop: 2,
-  },
-  statusTag: {
-    fontFamily: 'monospace',
-    fontSize: 10,
-    fontWeight: '700',
-    marginLeft: 8,
-  },
+  filePath: { fontFamily: 'monospace', fontSize: 10 },
+  recTag: { fontFamily: 'monospace', fontSize: 8, fontWeight: '700', marginTop: 2 },
+  statusTag: { fontFamily: 'monospace', fontSize: 10, fontWeight: '700', marginLeft: 8 },
 });

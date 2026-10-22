@@ -10,7 +10,11 @@ export default function RootLayout() {
   const colors = getColors();
 
   return (
-    <SafeAreaProvider style={[styles.root, { backgroundColor: colors.background }]}>
+    <SafeAreaProvider
+      accessible
+      accessibilityLabel="KRNL Core Root Application"
+      style={[styles.root, { backgroundColor: colors.background }]}
+    >
       <StatusBar style={themeMode === 'light' ? 'dark' : 'light'} />
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <Slot />
@@ -20,10 +24,6 @@ export default function RootLayout() {
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-  },
-  container: {
-    flex: 1,
-  },
+  root: { flex: 1 },
+  container: { flex: 1 },
 });

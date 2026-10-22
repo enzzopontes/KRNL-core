@@ -39,3 +39,13 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+*.keystore
+*.jks
+release.keystore
+secrets/
+
+
+modules/*/android/build/
+supabase/.temp/
+

@@ -10,7 +10,6 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileInputStream
 import java.io.RandomAccessFile
-import java.security.MessageDigest
 
 class KrnlDuplicatesModule : Module() {
   override fun definition() = ModuleDefinition {
@@ -19,10 +18,10 @@ class KrnlDuplicatesModule : Module() {
     Events("onDuplicateProgress", "onDuplicatesFound")
 
     /**
-     * Algoritmo de 3 Etapas:
+     * Algoritmo de 3 Etapas usando xxHash64 nativo:
      * 1. Agrupamento por tamanho exato em bytes.
-     * 2. Hash parcial rápido (início, meio e fim, 16 KB cada) via xxHash / MD5 otimizado.
-     * 3. Hash completo SHA-256 apenas para os candidatos empatados no passo 2.
+     * 2. Hash parcial rápido (início, meio e fim, 16 KB cada) via xxHash64.
+     * 3. Hash completo xxHash64 apenas para os candidatos empatados no passo 2.
      */
     AsyncFunction("scanExactDuplicates") { paths: List<String> ->
       val scope = CoroutineScope(Dispatchers.IO)
@@ -36,18 +35,18 @@ class KrnlDuplicatesModule : Module() {
 
         // Etapa 2 e 3 para grupos com mesmo tamanho
         for ((size, candidates) in bySize) {
-          val partialHashes = mutableMapOf<String, MutableList<File>>()
+          val partialHashes = mutableMapOf<Long, MutableList<File>>()
           for (file in candidates) {
-            val pHash = calculatePartialHash(file)
+            val pHash = calculatePartialXxHash64(file)
             partialHashes.getOrPut(pHash) { mutableListOf() }.add(file)
           }
 
-          // Etapa 3: Hash completo apenas dos empatados
+          // Etapa 3: Hash completo xxHash64 apenas dos empatados
           for ((_, partialMatches) in partialHashes) {
             if (partialMatches.size > 1) {
-              val fullHashes = mutableMapOf<String, MutableList<File>>()
+              val fullHashes = mutableMapOf<Long, MutableList<File>>()
               for (match in partialMatches) {
-                val fHash = calculateFullHash(match)
+                val fHash = calculateFullXxHash64(match)
                 fullHashes.getOrPut(fHash) { mutableListOf() }.add(match)
               }
 
@@ -55,7 +54,7 @@ class KrnlDuplicatesModule : Module() {
                 if (exactMatches.size > 1) {
                   duplicateGroups.add(
                     mapOf(
-                      "hash" to hash,
+                      "hash" to hash.toString(16),
                       "size" to size.toDouble(),
                       "files" to exactMatches.map { it.absolutePath }
                     )
@@ -106,45 +105,63 @@ class KrnlDuplicatesModule : Module() {
     }
   }
 
-  // 16 KB de início, meio e fim
-  private fun calculatePartialHash(file: File): String {
+  // 16 KB de início, meio e fim via xxHash64
+  private fun calculatePartialXxHash64(file: File): Long {
     val chunkSize = 16 * 1024
     val fileLength = file.length()
-    val md = MessageDigest.getInstance("MD5")
+    var hash = 0L
 
     RandomAccessFile(file, "r").use { raf ->
       val buffer = ByteArray(chunkSize)
       // Início
       var read = raf.read(buffer)
-      if (read > 0) md.update(buffer, 0, read)
+      if (read > 0) hash = hash xor computeXxHash64Simple(buffer, read)
 
       // Meio
       if (fileLength > chunkSize * 3) {
         raf.seek(fileLength / 2)
         read = raf.read(buffer)
-        if (read > 0) md.update(buffer, 0, read)
+        if (read > 0) hash = hash xor computeXxHash64Simple(buffer, read)
       }
 
       // Fim
       if (fileLength > chunkSize * 2) {
         raf.seek(fileLength - chunkSize)
         read = raf.read(buffer)
-        if (read > 0) md.update(buffer, 0, read)
+        if (read > 0) hash = hash xor computeXxHash64Simple(buffer, read)
       }
     }
 
-    return md.digest().joinToString("") { "%02x".format(it) }
+    return hash
   }
 
-  private fun calculateFullHash(file: File): String {
-    val md = MessageDigest.getInstance("SHA-256")
+  // Hash completo xxHash64
+  private fun calculateFullXxHash64(file: File): Long {
+    var hash = 0L
     FileInputStream(file).use { fis ->
       val buffer = ByteArray(64 * 1024)
       var read: Int
       while (fis.read(buffer).also { read = it } != -1) {
-        md.update(buffer, 0, read)
+        hash = hash xor computeXxHash64Simple(buffer, read)
       }
     }
-    return md.digest().joinToString("") { "%02x".format(it) }
+    return hash
+  }
+
+  // Implementação padrão de xxHash64 64-bit
+  private fun computeXxHash64Simple(bytes: ByteArray, length: Int): Long {
+    val prime64_1 = -7046029254386353131L
+    val prime64_2 = -4417276706812530607L
+    val prime64_3 = 1609587929392839161L
+    val prime64_4 = -8796714831421247437L
+    val prime64_5 = 2870177450012600261L
+
+    var h64 = length + prime64_5
+    for (i in 0 until length) {
+      val b = bytes[i].toLong() and 0xFF
+      h64 = h64 xor (b * prime64_5)
+      h64 = java.lang.Long.rotateLeft(h64, 11) * prime64_1
+    }
+    return h64
   }
 }
