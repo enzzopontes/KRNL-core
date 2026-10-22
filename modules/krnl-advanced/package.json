@@ -1,0 +1,7 @@
+{
+  "name": "krnl-advanced",
+  "version": "1.0.0",
+  "description": "KRNL WorkManager and advanced Direct flavor modules",
+  "main": "index.ts",
+  "types": "index.ts"
+}

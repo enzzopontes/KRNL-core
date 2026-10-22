@@ -31,6 +31,10 @@
 - [x] Trava rígida de código impedindo toque em pacotes críticos (System UI / Android Core)
 - [x] Fluxo seguro compatível com as políticas da Google Play Store
 
+## Fase Atual: Fase 5 — Automação e Avançado
+- [x] Módulo Kotlin `KrnlAdvancedModule` com WorkManager para rotinas semanais
+- [x] Restrições de execução: apenas carregando e na rede Wi-Fi não tarifada
+- [x] Arquitetura de Shizuku isolada estritamente para o flavor `direct` (sem inclusão no flavor `play`)
+
 ## Próximas Fases
-- [ ] Fase 5 — Automação e Avançado (WorkManager, Widgets HUD, Shizuku no flavor direct)
 - [ ] Fase 6 — Conta e Cobrança (Supabase, Licenças, Google Play Billing + Mercado Pago Edge Functions)
