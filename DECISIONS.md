@@ -10,3 +10,4 @@
 - 2026-10-22: Algoritmo de identificação de duplicadas opera em 3 etapas nativas em Kotlin (tamanho exato -> MD5/xxHash parcial de início/meio/fim -> SHA-256 completo apenas para empatados). dHash 64-bit implementado para imagens similares.
 - 2026-10-22: Gerenciador de Apps e Debloater seguro utilizam PackageManager nativo e intenção oficial do sistema para gerenciar pacotes. Pacotes do núcleo do sistema (ex: SystemUI) são permanentemente travados contra manipulação.
 - 2026-10-22: Automação via WorkManager configurada com restrições rígidas (apenas enquanto carrega e conectado ao Wi-Fi). Suporte a Shizuku estritamente bloqueado em tempo de compilação fora do flavor direct.
+- 2026-10-22: Conta e Cobrança desenhadas com suporte simultâneo a Google Play Billing e Mercado Pago (PIX/Cartão via Supabase Edge Functions). Schema SQL com RLS ativado e webhooks idempotentes.

@@ -31,10 +31,17 @@
 - [x] Trava rígida de código impedindo toque em pacotes críticos (System UI / Android Core)
 - [x] Fluxo seguro compatível com as políticas da Google Play Store
 
-## Fase Atual: Fase 5 — Automação e Avançado
-- [x] Módulo Kotlin `KrnlAdvancedModule` com WorkManager para rotinas semanais
-- [x] Restrições de execução: apenas carregando e na rede Wi-Fi não tarifada
-- [x] Arquitetura de Shizuku isolada estritamente para o flavor `direct` (sem inclusão no flavor `play`)
+## Fase Atual: Fase 6 — Conta e Cobrança [CONCLUÍDO]
+- [x] Schema SQL de migração do Supabase com RLS para `profiles`, `licenses` e `user_settings`
+- [x] Edge Functions em Deno (`create-payment`, `mercadopago-webhook`) com idempotência
+- [x] Tela Subscription com escolha de planos (R$ 9,90/mês e R$ 49,90/ano) e faturamento alternativo
+- [x] Documentação completa no README.md, DECISIONS.md e TODO_HUMANO.md
+- [x] Typecheck 100% aprovado sem erros
 
-## Próximas Fases
-- [ ] Fase 6 — Conta e Cobrança (Supabase, Licenças, Google Play Billing + Mercado Pago Edge Functions)
+## Fases Concluídas
+- [x] Fase 1 — Fundação (Expo 57, Design System HUD, Skia Gauges & Ring, Painel)
+- [x] Fase 2 — Armazenamento (Scanner Kotlin, Treemap Skia, Quarentena/Lixeira, Dry-run)
+- [x] Fase 3 — Duplicadas (3-Stage Hash Kotlin, dHash perceptual 64-bit, Comparação)
+- [x] Fase 4 — Apps e Segurança (PackageManager, Debloater seguro, Proteção de Kernel)
+- [x] Fase 5 — Automação e Avançado (WorkManager restrito, Shizuku isolado no flavor direct)
+- [x] Fase 6 — Conta e Cobrança (Supabase RLS, Edge Functions, Google Play + Mercado Pago)
