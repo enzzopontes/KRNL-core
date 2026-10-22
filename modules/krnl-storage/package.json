@@ -1,0 +1,7 @@
+{
+  "name": "krnl-storage",
+  "version": "1.0.0",
+  "description": "KRNL Storage and scanner native module",
+  "main": "index.ts",
+  "types": "index.ts"
+}

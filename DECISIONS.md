@@ -6,3 +6,4 @@
 - 2026-10-22: Design tokens mantidos em MMKV + Zustand com suporte a temas AMOLED #000000, Branco Técnico e Auto.
 - 2026-10-22: Configurados dois product flavors Android: `play` (com.krnl.core) e `direct` (com.krnl.core.direct). Shizuku restrito exclusivamente ao flavor `direct`.
 - 2026-10-22: Fórmula da nota de saúde do aparelho aberta e auditável (0 a 100) baseada em 4 pilares: Armazenamento (35%), Bateria/Temperatura (25%), Higiene de Apps (20%) e Segurança de Sistema (20%).
+- 2026-10-22: Módulo de armazenamento nativo (Kotlin) criado via Expo Modules API. Limpeza de lixo adota sempre modo simulação (dry-run) prévia e quarentena interna em vez de deleção imediata.

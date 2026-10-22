@@ -12,8 +12,14 @@
 - [ ] Tela de personalização e design tokens
 - [ ] Verificação (typecheck, lint) e documentação de métricas iniciais
 
+## Fase Atual: Fase 2 — Armazenamento
+- [x] Módulo nativo Expo Modules API (Kotlin) `KrnlStorageModule` com coroutines e IO em background
+- [x] Scanner de arquivos de lixo e temporários com suporte dry-run (simulação)
+- [x] Quarentena interna / Lixeira com renameTo e isolamento
+- [x] Componente Treemap visual em Skia
+- [x] Tela Storage Explorer completa com abas de Limpeza, Treemap e Lixeira
+
 ## Próximas Fases
-- [ ] Fase 2 — Armazenamento (Scanner, Treemap Skia, Limpeza de Lixo, WhatsApp/Telegram, Lixeira interna)
 - [ ] Fase 3 — Duplicadas (3 etapas xxHash64, dHash perceptual, comparação lado a lado)
 - [ ] Fase 4 — Apps e Segurança (Auditoria de permissões, debloater seguro, verificação de integridade)
 - [ ] Fase 5 — Automação e Avançado (WorkManager, Widgets HUD, Shizuku no flavor direct)
