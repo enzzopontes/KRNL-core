@@ -13,6 +13,8 @@ import { useThemeStore } from '../design/store';
 import { HudCard } from '../components/HudCard';
 import { HudButton } from '../components/HudButton';
 import { SPACING } from '../design/tokens';
+import Constants from 'expo-constants';
+const isDirect = Constants.expoConfig?.extra?.isDirect ?? false;
 
 export default function SubscriptionScreen() {
   const router = useRouter();
@@ -116,19 +118,21 @@ export default function SubscriptionScreen() {
               <Text style={[styles.provSub, { color: colors.textSecondary }]}>Pagamento avulso sem renovação automática</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[
-                styles.providerOption,
-                {
-                  borderColor: paymentProvider === 'google' ? accentColor : colors.border,
-                  backgroundColor: paymentProvider === 'google' ? colors.surfaceMuted : colors.surface,
-                },
-              ]}
-              onPress={() => setPaymentProvider('google')}
-            >
-              <Text style={[styles.provName, { color: colors.textPrimary }]}>GOOGLE PLAY BILLING</Text>
-              <Text style={[styles.provSub, { color: colors.textSecondary }]}>Assinatura padrão integrada à sua conta Google</Text>
-            </TouchableOpacity>
+            {!isDirect && (
+              <TouchableOpacity
+                style={[
+                  styles.providerOption,
+                  {
+                    borderColor: paymentProvider === 'google' ? accentColor : colors.border,
+                    backgroundColor: paymentProvider === 'google' ? colors.surfaceMuted : colors.surface,
+                  },
+                ]}
+                onPress={() => setPaymentProvider('google')}
+              >
+                <Text style={[styles.provName, { color: colors.textPrimary }]}>GOOGLE PLAY BILLING</Text>
+                <Text style={[styles.provSub, { color: colors.textSecondary }]}>Assinatura padrão integrada à sua conta Google</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           <HudButton
