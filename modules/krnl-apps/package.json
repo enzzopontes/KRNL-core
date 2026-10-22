@@ -1,0 +1,7 @@
+{
+  "name": "krnl-apps",
+  "version": "1.0.0",
+  "description": "KRNL Apps manager and safe debloat module",
+  "main": "index.ts",
+  "types": "index.ts"
+}

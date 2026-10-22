@@ -25,7 +25,12 @@
 - [x] Comparação lado a lado com algoritmo de recomendação de descarte inteligente
 - [x] Tela Duplicates interativa com escolha do arquivo a manter
 
+## Fase Atual: Fase 4 — Apps e Segurança
+- [x] Módulo Kotlin `KrnlAppsModule` com integração a PackageManager e PackageUsageStats
+- [x] Detecção de aplicativos inativos (30/60/90 dias) e classificação de risco de debloat
+- [x] Trava rígida de código impedindo toque em pacotes críticos (System UI / Android Core)
+- [x] Fluxo seguro compatível com as políticas da Google Play Store
+
 ## Próximas Fases
-- [ ] Fase 4 — Apps e Segurança (Auditoria de permissões, debloater seguro, verificação de integridade)
 - [ ] Fase 5 — Automação e Avançado (WorkManager, Widgets HUD, Shizuku no flavor direct)
 - [ ] Fase 6 — Conta e Cobrança (Supabase, Licenças, Google Play Billing + Mercado Pago Edge Functions)

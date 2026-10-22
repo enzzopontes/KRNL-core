@@ -1,0 +1,28 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+group = 'krnl.modules.apps'
+version = '1.0.0'
+
+android {
+  namespace 'krnl.modules.apps'
+  compileSdkVersion 36
+
+  defaultConfig {
+    minSdkVersion 30
+    targetSdkVersion 36
+    versionCode 1
+    versionName "1.0.0"
+  }
+
+  lintOptions {
+    abortOnError false
+  }
+}
+
+dependencies {
+  implementation project(':expo-modules-core')
+  implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+  implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1"
+  implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1"
+}
