@@ -19,8 +19,13 @@
 - [x] Componente Treemap visual em Skia
 - [x] Tela Storage Explorer completa com abas de Limpeza, Treemap e Lixeira
 
+## Fase Atual: Fase 3 — Duplicadas e Semelhantes
+- [x] Módulo Kotlin `KrnlDuplicatesModule` com algoritmo de hash 3-stage em background
+- [x] Implementação nativa de dHash (perceptual hash 64-bit para fotos)
+- [x] Comparação lado a lado com algoritmo de recomendação de descarte inteligente
+- [x] Tela Duplicates interativa com escolha do arquivo a manter
+
 ## Próximas Fases
-- [ ] Fase 3 — Duplicadas (3 etapas xxHash64, dHash perceptual, comparação lado a lado)
 - [ ] Fase 4 — Apps e Segurança (Auditoria de permissões, debloater seguro, verificação de integridade)
 - [ ] Fase 5 — Automação e Avançado (WorkManager, Widgets HUD, Shizuku no flavor direct)
 - [ ] Fase 6 — Conta e Cobrança (Supabase, Licenças, Google Play Billing + Mercado Pago Edge Functions)
