@@ -13,3 +13,10 @@ export async function scheduleWeeklyMaintenance(): Promise<boolean> {
   }
   return true;
 }
+
+export async function checkStorageAlert(): Promise<boolean> {
+  if (nativeModule?.checkStorageAlert) {
+    return await nativeModule.checkStorageAlert();
+  }
+  return false;
+}

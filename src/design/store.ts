@@ -3,7 +3,6 @@ import { createJSONStorage, persist, StateStorage } from 'zustand/middleware';
 import { createMMKV } from 'react-native-mmkv';
 import { AMOLED_THEME, ColorTheme, LIGHT_THEME } from './tokens';
 
-// Initialize MMKV storage instance
 export const mmkv = createMMKV({ id: 'krnl-settings' });
 
 const zustandStorage: StateStorage = {
@@ -73,9 +72,10 @@ export const useThemeStore = create<ThemeState>()(
         if (highContrast) {
           return {
             ...base,
-            border: '#444444',
+            border: '#4D4D4D',
             borderActive: '#FFFFFF',
-            textSecondary: '#CCCCCC',
+            textSecondary: '#C8C8C8',
+            textMuted: '#9A9A9A',
           };
         }
         return base;

@@ -7,17 +7,18 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeStore } from '../design/store';
 import { HudCard } from '../components/HudCard';
 import { HudButton } from '../components/HudButton';
+import { HudHeader } from '../components/HudHeader';
+import { HudBottomBar } from '../components/HudBottomBar';
 import { SPACING } from '../design/tokens';
 import Constants from 'expo-constants';
+
 const isDirect = Constants.expoConfig?.extra?.isDirect ?? false;
 
 export default function SubscriptionScreen() {
-  const router = useRouter();
   const insets = useSafeAreaInsets();
   const { getColors, accentColor, isPro, setIsPro } = useThemeStore();
   const colors = getColors();
@@ -38,211 +39,197 @@ export default function SubscriptionScreen() {
     }, 1200);
   };
 
+  const handleCancelSubscription = () => {
+    Alert.alert(
+      'Cancelar Assinatura PRO',
+      'Deseja reverter para a versão gratuita? Seus dados e backups locais de lixeira permanecerão intactos.',
+      [
+        { text: 'Manter PRO', style: 'cancel' },
+        {
+          text: 'Confirmar Cancelamento',
+          style: 'destructive',
+          onPress: () => {
+            setIsPro(false);
+            Alert.alert('Plano Cancelado', 'Sua assinatura foi desativada com sucesso.');
+          },
+        },
+      ]
+    );
+  };
+
+  const handleRefundTerms = () => {
+    Alert.alert(
+      'Política de Reembolso & Arrependimento',
+      'Artigo 49 do CDC: Direito de arrependimento em até 7 dias corridos após a contratação. Reembolsos PIX processados pelo Mercado Pago e Google Play Billing diretamente pela loja.',
+      [{ text: 'Entendido' }]
+    );
+  };
+
   return (
     <View style={[styles.screen, { backgroundColor: colors.background, paddingTop: insets.top }]}>
-      <View style={[styles.topBar, { borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Text style={[styles.backText, { color: colors.textPrimary }]}>&lt; VOLTAR</Text>
-        </TouchableOpacity>
-        <Text style={[styles.title, { color: accentColor }]}>LICENCIAMENTO // KRNL PRO</Text>
-      </View>
+      <HudHeader showBack title="KRNL PRO // LICENÇA" subtitle="ASSINATURA TRANSPARENTE" />
 
-      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
-        <HudCard title="Status do Usuário" badge={isPro ? 'PRO ATIVO' : 'FREE'}>
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 84 }]}
+        showsVerticalScrollIndicator={false}
+      >
+        <HudCard
+          title="Status da Licença"
+          badge={isPro ? 'PRO ATIVO' : 'MODO GRATUITO'}
+          badgeVariant={isPro ? 'ok' : 'default'}
+          subtitle={isPro ? 'Acesso total a todas as ferramentas e temas' : 'Recursos essenciais liberados sem anúncios'}
+        >
           <Text style={[styles.statusText, { color: isPro ? colors.success : colors.textPrimary }]}>
-            {isPro ? 'LICENÇA VITALÍCIA / ASSINATURA ATIVA' : 'MODO GRATUITO'}
+            {isPro ? 'LICENÇA ATIVA // KRNL PRO' : 'VERSÃO ESSENCIAL GRATUITA'}
           </Text>
           <Text style={[styles.subText, { color: colors.textSecondary }]}>
-            Gratuito: Painel, limpeza essencial, duplicadas exatas, debloat modo seguro.{'\n'}
-            PRO: Limpeza profunda de mensageiros, fotos parecidas dHash, WorkManager semanal, widgets HUD e todas as cores accent.
+            • Gratuito: Painel, limpeza de caches, duplicadas exatas xxHash, debloat modo seguro e explorador.{'\n'}
+            • PRO: Fotos similares dHash, limpeza profunda de mensagens, agendador WorkManager e todos os temas.
           </Text>
+
+          {isPro && (
+            <View style={{ marginTop: SPACING.md }}>
+              <HudButton
+                label="GERENCIAR / CANCELAR ASSINATURA"
+                variant="danger"
+                onPress={handleCancelSubscription}
+              />
+            </View>
+          )}
         </HudCard>
 
         {/* Plan Selection */}
-        <HudCard title="Selecione o Período">
-          <View style={styles.plansRow}>
-            <TouchableOpacity
-              style={[
-                styles.planBox,
-                {
-                  borderColor: selectedPlan === 'monthly' ? accentColor : colors.border,
-                  backgroundColor: selectedPlan === 'monthly' ? colors.surfaceMuted : colors.surface,
-                },
-              ]}
-              onPress={() => setSelectedPlan('monthly')}
+        {!isPro && (
+          <>
+            <HudCard
+              title="Período de Assinatura"
+              badge="ESCOLHA DIRETA"
+              subtitle="Cancele a qualquer momento sem pegadinhas ou cobranças ocultas"
             >
-              <Text style={[styles.planTitle, { color: colors.textPrimary }]}>MENSAL</Text>
-              <Text style={[styles.planPrice, { color: accentColor }]}>R$ 9,90</Text>
-              <Text style={[styles.planPeriod, { color: colors.textSecondary }]}>por mês</Text>
-            </TouchableOpacity>
+              <View style={styles.plansRow}>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  style={[
+                    styles.planBox,
+                    {
+                      borderColor: selectedPlan === 'monthly' ? accentColor : colors.border,
+                      backgroundColor: selectedPlan === 'monthly' ? 'rgba(255,255,255,0.05)' : colors.surfaceAlt,
+                    },
+                  ]}
+                  onPress={() => setSelectedPlan('monthly')}
+                >
+                  <Text style={[styles.planTitle, { color: colors.textPrimary }]}>MENSAL</Text>
+                  <Text style={[styles.planPrice, { color: accentColor }]}>R$ 9,90</Text>
+                  <Text style={[styles.planPeriod, { color: colors.textSecondary }]}>cobrança mensal</Text>
+                </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[
-                styles.planBox,
-                {
-                  borderColor: selectedPlan === 'annual' ? accentColor : colors.border,
-                  backgroundColor: selectedPlan === 'annual' ? colors.surfaceMuted : colors.surface,
-                },
-              ]}
-              onPress={() => setSelectedPlan('annual')}
-            >
-              <View style={[styles.saveBadge, { backgroundColor: accentColor }]}>
-                <Text style={styles.saveText}>ECONOMIZE 58%</Text>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  style={[
+                    styles.planBox,
+                    {
+                      borderColor: selectedPlan === 'annual' ? accentColor : colors.border,
+                      backgroundColor: selectedPlan === 'annual' ? 'rgba(255,255,255,0.05)' : colors.surfaceAlt,
+                    },
+                  ]}
+                  onPress={() => setSelectedPlan('annual')}
+                >
+                  <View style={[styles.saveBadge, { backgroundColor: accentColor }]}>
+                    <Text style={styles.saveText}>ECONOMIZE 58%</Text>
+                  </View>
+                  <Text style={[styles.planTitle, { color: colors.textPrimary }]}>ANUAL</Text>
+                  <Text style={[styles.planPrice, { color: accentColor }]}>R$ 49,90</Text>
+                  <Text style={[styles.planPeriod, { color: colors.textSecondary }]}>equivale a R$ 4,16/mês</Text>
+                </TouchableOpacity>
               </View>
-              <Text style={[styles.planTitle, { color: colors.textPrimary }]}>ANUAL</Text>
-              <Text style={[styles.planPrice, { color: accentColor }]}>R$ 49,90</Text>
-              <Text style={[styles.planPeriod, { color: colors.textSecondary }]}>R$ 4,16/mês</Text>
-            </TouchableOpacity>
-          </View>
-        </HudCard>
+            </HudCard>
 
-        {/* Payment Provider - Side-by-side compliance */}
-        <HudCard title="Forma de Pagamento (Escolha Aberta)" badge="COMPLIANCE">
-          <Text style={[styles.subText, { color: colors.textSecondary }]}>
-            Conforme diretrizes brasileiras de cobrança alternativa, você pode optar pelo Google
-            Play Billing ou faturamento direto via Mercado Pago (PIX / Cartão).
-          </Text>
-
-          <View style={styles.providerRow}>
-            <TouchableOpacity
-              style={[
-                styles.providerOption,
-                {
-                  borderColor: paymentProvider === 'pix' ? accentColor : colors.border,
-                  backgroundColor: paymentProvider === 'pix' ? colors.surfaceMuted : colors.surface,
-                },
-              ]}
-              onPress={() => setPaymentProvider('pix')}
+            {/* Payment Provider */}
+            <HudCard
+              title="Método de Faturamento"
+              badge="COMPLIANCE"
+              subtitle="Conforme diretrizes brasileiras de cobrança transparente"
             >
-              <Text style={[styles.provName, { color: colors.textPrimary }]}>MERCADO PAGO (PIX)</Text>
-              <Text style={[styles.provSub, { color: colors.textSecondary }]}>Pagamento avulso sem renovação automática</Text>
-            </TouchableOpacity>
+              <View style={styles.providerRow}>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  style={[
+                    styles.providerOption,
+                    {
+                      borderColor: paymentProvider === 'pix' ? accentColor : colors.border,
+                      backgroundColor: paymentProvider === 'pix' ? 'rgba(255,255,255,0.05)' : colors.surfaceAlt,
+                    },
+                  ]}
+                  onPress={() => setPaymentProvider('pix')}
+                >
+                  <Text style={[styles.provName, { color: colors.textPrimary }]}>MERCADO PAGO (PIX)</Text>
+                  <Text style={[styles.provSub, { color: colors.textSecondary }]}>
+                    Pagamento avulso sem renovação automática forçada
+                  </Text>
+                </TouchableOpacity>
 
-            {!isDirect && (
-              <TouchableOpacity
-                style={[
-                  styles.providerOption,
-                  {
-                    borderColor: paymentProvider === 'google' ? accentColor : colors.border,
-                    backgroundColor: paymentProvider === 'google' ? colors.surfaceMuted : colors.surface,
-                  },
-                ]}
-                onPress={() => setPaymentProvider('google')}
-              >
-                <Text style={[styles.provName, { color: colors.textPrimary }]}>GOOGLE PLAY BILLING</Text>
-                <Text style={[styles.provSub, { color: colors.textSecondary }]}>Assinatura padrão integrada à sua conta Google</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+                {!isDirect && (
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    style={[
+                      styles.providerOption,
+                      {
+                        borderColor: paymentProvider === 'google' ? accentColor : colors.border,
+                        backgroundColor: paymentProvider === 'google' ? 'rgba(255,255,255,0.05)' : colors.surfaceAlt,
+                      },
+                    ]}
+                    onPress={() => setPaymentProvider('google')}
+                  >
+                    <Text style={[styles.provName, { color: colors.textPrimary }]}>GOOGLE PLAY BILLING</Text>
+                    <Text style={[styles.provSub, { color: colors.textSecondary }]}>
+                      Assinatura gerenciada diretamente via conta Google
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
 
-          <HudButton
-            label={loading ? 'PROCESSANDO...' : `ATIVAR PRO — ${selectedPlan === 'annual' ? 'R$ 49,90' : 'R$ 9,90'}`}
-            variant="primary"
-            loading={loading}
-            style={{ marginTop: SPACING.md }}
-            onPress={handleCheckout}
-          />
+              <HudButton
+                label={loading ? 'PROCESSANDO...' : `ATIVAR PRO — ${selectedPlan === 'annual' ? 'R$ 49,90/ANO' : 'R$ 9,90/MÊS'}`}
+                variant="primary"
+                loading={loading}
+                style={{ marginTop: SPACING.md }}
+                onPress={handleCheckout}
+              />
+            </HudCard>
+          </>
+        )}
+
+        <HudCard title="Segurança & Reembolso" badge="CDC 7 DIAS">
+          <Text style={[styles.subText, { color: colors.textSecondary }]}>
+            Transações protegidas por criptografia de ponta a ponta e direito legal de arrependimento em até 7 dias corridos.
+          </Text>
+          <TouchableOpacity onPress={handleRefundTerms} style={{ marginTop: SPACING.xs }}>
+            <Text style={{ fontFamily: 'monospace', fontSize: 10, color: accentColor, fontWeight: '700' }}>
+              [ LER POLÍTICA DE REEMBOLSO (CDC) ]
+            </Text>
+          </TouchableOpacity>
         </HudCard>
       </ScrollView>
+
+      <HudBottomBar />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-  },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.md,
-    borderBottomWidth: 1,
-  },
-  backButton: {
-    marginRight: SPACING.md,
-  },
-  backText: {
-    fontFamily: 'monospace',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  title: {
-    fontFamily: 'monospace',
-    fontSize: 12,
-    fontWeight: '900',
-    letterSpacing: 1.5,
-  },
-  content: {
-    padding: SPACING.md,
-  },
-  statusText: {
-    fontFamily: 'monospace',
-    fontSize: 12,
-    fontWeight: '900',
-    marginBottom: 4,
-  },
-  subText: {
-    fontFamily: 'monospace',
-    fontSize: 11,
-    lineHeight: 16,
-  },
-  plansRow: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-    marginVertical: SPACING.xs,
-  },
-  planBox: {
-    flex: 1,
-    borderWidth: 1,
-    padding: SPACING.md,
-    alignItems: 'center',
-    position: 'relative',
-  },
-  saveBadge: {
-    position: 'absolute',
-    top: -8,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  saveText: {
-    color: '#000000',
-    fontSize: 8,
-    fontFamily: 'monospace',
-    fontWeight: '900',
-  },
-  planTitle: {
-    fontFamily: 'monospace',
-    fontSize: 12,
-    fontWeight: '700',
-    marginTop: 4,
-  },
-  planPrice: {
-    fontFamily: 'monospace',
-    fontSize: 20,
-    fontWeight: '900',
-    marginVertical: 4,
-  },
-  planPeriod: {
-    fontFamily: 'monospace',
-    fontSize: 10,
-  },
-  providerRow: {
-    marginVertical: SPACING.xs,
-    gap: SPACING.xs,
-  },
-  providerOption: {
-    borderWidth: 1,
-    padding: SPACING.sm,
-  },
-  provName: {
-    fontFamily: 'monospace',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  provSub: {
-    fontFamily: 'monospace',
-    fontSize: 9,
-    marginTop: 2,
-  },
+  screen: { flex: 1 },
+  content: { padding: SPACING.md },
+  statusText: { fontFamily: 'monospace', fontSize: 13, fontWeight: '900', marginBottom: 4 },
+  subText: { fontFamily: 'monospace', fontSize: 11, lineHeight: 16 },
+  plansRow: { flexDirection: 'row', gap: SPACING.sm, marginVertical: SPACING.xs },
+  planBox: { flex: 1, borderWidth: 1, padding: SPACING.md, alignItems: 'center', position: 'relative', borderRadius: 2 },
+  saveBadge: { position: 'absolute', top: -10, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 2 },
+  saveText: { color: '#000000', fontFamily: 'monospace', fontSize: 8, fontWeight: '900' },
+  planTitle: { fontFamily: 'monospace', fontSize: 11, fontWeight: '800' },
+  planPrice: { fontFamily: 'monospace', fontSize: 18, fontWeight: '900', marginVertical: 4 },
+  planPeriod: { fontFamily: 'monospace', fontSize: 9 },
+  providerRow: { gap: SPACING.xs, marginVertical: SPACING.sm },
+  providerOption: { borderWidth: 1, padding: SPACING.sm, borderRadius: 2 },
+  provName: { fontFamily: 'monospace', fontSize: 11, fontWeight: '800' },
+  provSub: { fontFamily: 'monospace', fontSize: 9, marginTop: 2 },
 });

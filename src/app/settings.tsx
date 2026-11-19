@@ -6,13 +6,17 @@ import {
   ScrollView,
   TouchableOpacity,
   Switch,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeStore } from '../design/store';
-import { ACCENT_PRESETS, SPACING } from '../design/tokens';
+import { ACCENT_PRESETS, SPACING, appSignature, appVersion } from '../design/tokens';
 import { HudCard } from '../components/HudCard';
 import { HudButton } from '../components/HudButton';
+import { HudHeader } from '../components/HudHeader';
+import { HudBottomBar } from '../components/HudBottomBar';
+import { generateAndShareSystemReport } from '../services/reportExport';
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -34,30 +38,31 @@ export default function SettingsScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background, paddingTop: insets.top }]}>
-      <View style={[styles.topBar, { borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Text style={[styles.backText, { color: colors.textPrimary }]}>&lt; PAINEL</Text>
-        </TouchableOpacity>
-        <Text style={[styles.title, { color: accentColor }]}>PERSONALIZAÇÃO // HUD</Text>
-      </View>
+      <HudHeader showBack title="PERSONALIZAÇÃO // HUD" subtitle="TOKENS VISUAIS & PARÂMETROS" />
 
-      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
-        {/* Accent Color Palette */}
-        <HudCard title="Cor de Destaque (Accent)" badge="RGB">
-          <Text style={[styles.subText, { color: colors.textSecondary }]}>
-            Define o tom técnico dos anéis de dados, indicadores e bordas ativas.
-          </Text>
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 84 }]}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Accent Color Palette with Live Preview */}
+        <HudCard
+          title="Tom de Destaque Técnico (Accent)"
+          badge="PALETA HUD"
+          badgeVariant="accent"
+          subtitle="Define o tom dos anéis Skia, sparklines e contornos ativos"
+        >
           <View style={styles.presetsGrid}>
             {ACCENT_PRESETS.map((preset) => {
               const isSelected = accentColor.toUpperCase() === preset.hex.toUpperCase();
               return (
                 <TouchableOpacity
                   key={preset.hex}
+                  activeOpacity={0.8}
                   style={[
                     styles.presetItem,
                     {
-                      borderColor: isSelected ? '#FFFFFF' : colors.border,
-                      backgroundColor: colors.surfaceAlt,
+                      borderColor: isSelected ? accentColor : colors.border,
+                      backgroundColor: isSelected ? 'rgba(255,255,255,0.05)' : colors.surfaceAlt,
                     },
                   ]}
                   onPress={() => setAccentColor(preset.hex)}
@@ -73,8 +78,12 @@ export default function SettingsScreen() {
           </View>
         </HudCard>
 
-        {/* Theme Mode */}
-        <HudCard title="Modo Visual de Superfície">
+        {/* Surface Visual Mode */}
+        <HudCard
+          title="Superfície & Fundo"
+          badge="AMOLED"
+          subtitle="Preto absoluto (#000000) otimizado para economia de pixels orgânicos"
+        >
           <View style={styles.switchRow}>
             <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>PRETO AMOLED PURO (#000000)</Text>
             <Switch
@@ -87,11 +96,17 @@ export default function SettingsScreen() {
         </HudCard>
 
         {/* Accessibility & Render Controls */}
-        <HudCard title="Controles de Renderização & Acessibilidade">
+        <HudCard
+          title="Acessibilidade & Motor de Render"
+          badge="WCAG 2.1"
+          subtitle="Ajuste de contraste, renderização e detalhamento de caminhos"
+        >
           <View style={styles.switchRow}>
             <View style={styles.labelCol}>
               <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>ALTO CONTRASTE</Text>
-              <Text style={[styles.rowSub, { color: colors.textSecondary }]}>Bordas reforçadas de 2px e maior contraste de texto</Text>
+              <Text style={[styles.rowSub, { color: colors.textSecondary }]}>
+                Bordas reforçadas de 2px e maior contraste de rótulos
+              </Text>
             </View>
             <Switch
               value={highContrast}
@@ -101,12 +116,14 @@ export default function SettingsScreen() {
             />
           </View>
 
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
           <View style={styles.switchRow}>
             <View style={styles.labelCol}>
               <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>REDUZIR MOVIMENTO</Text>
-              <Text style={[styles.rowSub, { color: colors.textSecondary }]}>Desativa animações interpoladas e transições</Text>
+              <Text style={[styles.rowSub, { color: colors.textSecondary }]}>
+                Desativa transições animadas e adota cortes diretos
+              </Text>
             </View>
             <Switch
               value={reduceMotion}
@@ -116,12 +133,14 @@ export default function SettingsScreen() {
             />
           </View>
 
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
           <View style={styles.switchRow}>
             <View style={styles.labelCol}>
               <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>MODO ESPECIALISTA</Text>
-              <Text style={[styles.rowSub, { color: colors.textSecondary }]}>Exibe nomes técnicos de pacotes e caminhos completos no disco</Text>
+              <Text style={[styles.rowSub, { color: colors.textSecondary }]}>
+                Exibe caminhos absolutos no disco e nomes de pacotes APK
+              </Text>
             </View>
             <Switch
               value={expertMode}
@@ -132,60 +151,58 @@ export default function SettingsScreen() {
           </View>
         </HudCard>
 
-        {/* Links to Subscriptions and System Info */}
-        <HudCard title="Licenciamento & Versão">
-          <Text style={[styles.rowSub, { color: colors.textSecondary }]}>
-            KRNL Core — Edição de Manutenção e Auditoria Aberta.
-          </Text>
+        {/* Diagnostic Logs & Support */}
+        <HudCard title="Auditoria, Logs & Exportação">
           <HudButton
-            label="GERENCIAR PLANO PRO (R$ 9,90/mês)"
+            label="EXPORTAR RELATÓRIO DO SISTEMA (JSON)"
             variant="secondary"
+            onPress={generateAndShareSystemReport}
+          />
+          <HudButton
+            label="CENTRAL DE SUPORTE // FAQ & DIAGNÓSTICO"
+            variant="secondary"
+            style={{ marginTop: SPACING.sm }}
+            onPress={() => router.push('/support')}
+          />
+        </HudCard>
+
+        {/* About Card with Real HUD Logo from assets/logo.png */}
+        <HudCard title="Assinatura do Sistema & Identidade" badge={appVersion}>
+          <View style={styles.aboutContainer}>
+            <Image
+              source={require('../../assets/logo.png')}
+              style={styles.logoEmblem}
+              resizeMode="contain"
+              accessibilityLabel="Emblema Oficial KRNL CORE"
+            />
+            <Text style={[styles.aboutTitle, { color: colors.textPrimary }]}>{appSignature}</Text>
+            <Text style={[styles.aboutDesc, { color: colors.textSecondary }]}>
+              Instrumento técnico de auditoria local, limpeza de armazenamento com quarentena,
+              algoritmo xxHash64 e telemetria transparente.
+            </Text>
+          </View>
+          <HudButton
+            label="GERENCIAR LICENÇA PRO"
+            variant="primary"
             style={{ marginTop: SPACING.sm }}
             onPress={() => router.push('/subscription')}
           />
         </HudCard>
       </ScrollView>
+
+      <HudBottomBar />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-  },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.md,
-    borderBottomWidth: 1,
-  },
-  backButton: {
-    marginRight: SPACING.md,
-  },
-  backText: {
-    fontFamily: 'monospace',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  title: {
-    fontFamily: 'monospace',
-    fontSize: 12,
-    fontWeight: '900',
-    letterSpacing: 1.5,
-  },
-  content: {
-    padding: SPACING.md,
-  },
-  subText: {
-    fontFamily: 'monospace',
-    fontSize: 11,
-    marginBottom: SPACING.sm,
-  },
+  screen: { flex: 1 },
+  content: { padding: SPACING.md },
   presetsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: SPACING.xs,
+    gap: 8,
+    marginVertical: SPACING.xs,
   },
   presetItem: {
     width: '48%',
@@ -193,29 +210,30 @@ const styles = StyleSheet.create({
     padding: SPACING.sm,
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 2,
+    borderRadius: 2,
   },
   colorDot: {
-    width: 12,
-    height: 12,
+    width: 14,
+    height: 14,
+    borderRadius: 2,
     marginRight: 8,
   },
   presetName: {
     fontFamily: 'monospace',
-    fontSize: 11,
-    fontWeight: '700',
+    fontSize: 10,
+    fontWeight: '800',
     flex: 1,
   },
   activeMark: {
     fontFamily: 'monospace',
     fontSize: 9,
-    fontWeight: '700',
+    fontWeight: '900',
   },
   switchRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: SPACING.xs,
+    justifyContent: 'space-between',
+    paddingVertical: SPACING.xs + 2,
   },
   labelCol: {
     flex: 1,
@@ -224,16 +242,38 @@ const styles = StyleSheet.create({
   rowLabel: {
     fontFamily: 'monospace',
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   rowSub: {
     fontFamily: 'monospace',
-    fontSize: 10,
+    fontSize: 9,
     marginTop: 2,
+    lineHeight: 13,
   },
   divider: {
     height: 1,
-    backgroundColor: '#1F1F1F',
     marginVertical: SPACING.xs,
+  },
+  aboutContainer: {
+    alignItems: 'center',
+    paddingVertical: SPACING.sm,
+  },
+  logoEmblem: {
+    width: 130,
+    height: 130,
+    marginBottom: SPACING.sm,
+  },
+  aboutTitle: {
+    fontSize: 14,
+    fontFamily: 'monospace',
+    fontWeight: '900',
+    letterSpacing: 2,
+  },
+  aboutDesc: {
+    fontSize: 10,
+    fontFamily: 'monospace',
+    textAlign: 'center',
+    marginTop: 6,
+    lineHeight: 15,
   },
 });

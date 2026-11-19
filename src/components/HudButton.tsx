@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
-  TouchableOpacity,
+  Pressable,
   Text,
   StyleSheet,
   ViewStyle,
@@ -9,17 +9,18 @@ import {
   View,
 } from 'react-native';
 import { useThemeStore } from '../design/store';
-import { SPACING } from '../design/tokens';
+import { SPACING, stroke, touch, radius } from '../design/tokens';
 
 interface HudButtonProps {
   label: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'pill';
   disabled?: boolean;
   loading?: boolean;
   style?: ViewStyle;
   textStyle?: TextStyle;
   icon?: React.ReactNode;
+  subtitle?: string;
 }
 
 export const HudButton: React.FC<HudButtonProps> = ({
@@ -31,82 +32,138 @@ export const HudButton: React.FC<HudButtonProps> = ({
   style,
   textStyle,
   icon,
+  subtitle,
 }) => {
-  const { getColors, accentColor } = useThemeStore();
+  const { getColors, accentColor, highContrast } = useThemeStore();
   const colors = getColors();
+  const [isPressed, setIsPressed] = useState(false);
 
-  const getBackgroundColor = () => {
+  const borderWidth = highContrast ? stroke.strong : stroke.hairline;
+
+  const getBackgroundColor = (pressed: boolean) => {
     if (disabled) return colors.surfaceMuted;
-    if (variant === 'primary') return accentColor;
-    if (variant === 'danger') return colors.danger;
-    if (variant === 'ghost') return 'transparent';
-    return colors.surface;
+
+    if (variant === 'primary') {
+      return accentColor;
+    }
+    if (variant === 'danger') {
+      return pressed ? 'rgba(239, 68, 68, 0.22)' : 'rgba(239, 68, 68, 0.12)';
+    }
+    if (variant === 'ghost') {
+      return pressed ? colors.surfaceAlt : 'transparent';
+    }
+    if (variant === 'pill') {
+      return pressed ? colors.surfaceMuted : colors.surfaceAlt;
+    }
+    // secondary
+    return pressed ? colors.surfaceMuted : colors.surfaceAlt;
   };
 
   const getBorderColor = () => {
     if (disabled) return colors.border;
     if (variant === 'primary') return accentColor;
-    if (variant === 'danger') return colors.danger;
+    if (variant === 'danger') return 'rgba(239, 68, 68, 0.35)';
     if (variant === 'ghost') return 'transparent';
+    if (variant === 'pill') return colors.borderActive;
     return colors.borderActive;
   };
 
-  const getTextColor = () => {
+  const getTextColor = (pressed: boolean) => {
     if (disabled) return colors.textMuted;
+
     if (variant === 'primary') {
-      // If accent is white or light, text is black
-      return accentColor.toLowerCase() === '#ffffff' ? '#000000' : '#000000';
+      const isLightAccent =
+        accentColor === '#FFFFFF' ||
+        accentColor.toUpperCase() === '#FFF' ||
+        accentColor === '#FBBF24' ||
+        accentColor === '#F59E0B' ||
+        accentColor === '#4ADE80' ||
+        accentColor === '#10B981' ||
+        accentColor === '#22D3EE' ||
+        accentColor === '#00F0FF';
+      return isLightAccent ? '#000000' : '#FFFFFF';
     }
-    if (variant === 'danger') return '#FFFFFF';
+    if (variant === 'danger') {
+      return colors.danger;
+    }
     return colors.textPrimary;
   };
 
   return (
-    <TouchableOpacity
-      activeOpacity={0.8}
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ disabled: disabled || loading, busy: loading }}
+      accessibilityLabel={`${label}${subtitle ? ` - ${subtitle}` : ''}`}
       onPress={onPress}
       disabled={disabled || loading}
-      style={[
+      onPressIn={() => setIsPressed(true)}
+      onPressOut={() => setIsPressed(false)}
+      style={({ pressed }) => [
         styles.button,
         {
-          backgroundColor: getBackgroundColor(),
+          minHeight: touch.min,
+          backgroundColor: getBackgroundColor(pressed),
           borderColor: getBorderColor(),
+          borderWidth,
+          borderRadius: variant === 'pill' ? radius.pill : radius.md,
+          opacity: disabled ? 0.45 : pressed && variant === 'primary' ? 0.88 : 1,
         },
         style,
       ]}
     >
       {loading ? (
-        <ActivityIndicator size="small" color={getTextColor()} />
+        <ActivityIndicator size="small" color={getTextColor(isPressed)} />
       ) : (
-        <View style={styles.content}>
+        <View style={styles.contentWrap}>
           {icon && <View style={styles.iconContainer}>{icon}</View>}
-          <Text
-            style={[
-              styles.text,
-              {
-                color: getTextColor(),
-              },
-              textStyle,
-            ]}
-          >
-            {label.toUpperCase()}
-          </Text>
+          <View style={styles.textWrap}>
+            <Text
+              style={[
+                styles.label,
+                {
+                  color: getTextColor(isPressed),
+                },
+                textStyle,
+              ]}
+              numberOfLines={1}
+            >
+              {label}
+            </Text>
+            {subtitle && (
+              <Text
+                style={[
+                  styles.subtitle,
+                  {
+                    color:
+                      variant === 'primary'
+                        ? getTextColor(isPressed) === '#000000'
+                          ? 'rgba(0, 0, 0, 0.7)'
+                          : 'rgba(255, 255, 255, 0.7)'
+                        : colors.textSecondary,
+                  },
+                ]}
+                numberOfLines={1}
+              >
+                {subtitle}
+              </Text>
+            )}
+          </View>
         </View>
       )}
-    </TouchableOpacity>
+    </Pressable>
   );
 };
 
 const styles = StyleSheet.create({
   button: {
-    borderWidth: 1,
-    paddingVertical: SPACING.md - 2,
-    paddingHorizontal: SPACING.lg,
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
     marginVertical: SPACING.xs,
+    position: 'relative',
   },
-  content: {
+  contentWrap: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -114,10 +171,18 @@ const styles = StyleSheet.create({
   iconContainer: {
     marginRight: SPACING.sm,
   },
-  text: {
-    fontSize: 12,
-    fontFamily: 'monospace',
-    fontWeight: '700',
-    letterSpacing: 1.2,
+  textWrap: {
+    alignItems: 'center',
+  },
+  label: {
+    fontSize: 13,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 11,
+    marginTop: 2,
+    textAlign: 'center',
   },
 });

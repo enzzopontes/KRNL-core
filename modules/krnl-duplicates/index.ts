@@ -10,6 +10,24 @@ export interface DuplicateScanResult {
   groups: DuplicateGroup[];
 }
 
+export interface BlurryPhoto {
+  path: string;
+  size: number;
+  blurScore: number;
+}
+
+export interface SimilarPhotoItem {
+  path: string;
+  size: number;
+  dHash: string;
+  distance: number;
+}
+
+export interface SimilarPhotoGroup {
+  representative: string;
+  files: SimilarPhotoItem[];
+}
+
 let nativeModule: any = null;
 try {
   nativeModule = requireNativeModule('KrnlDuplicatesModule');
@@ -19,14 +37,22 @@ try {
 
 const emitter = nativeModule ? new EventEmitter(nativeModule) : null;
 
-export async function scanExactDuplicates(paths: string[]): Promise<DuplicateScanResult> {
+export async function scanExactDuplicates(paths: string[] = []): Promise<DuplicateScanResult> {
   if (nativeModule?.scanExactDuplicates) {
+    const res = await nativeModule.scanExactDuplicates(paths);
+    if (res && res.groups) {
+      return res;
+    }
     return new Promise((resolve) => {
-      const sub = (emitter as any)?.addListener('onDuplicatesFound', (res: DuplicateScanResult) => {
+      const sub = (emitter as any)?.addListener('onDuplicatesFound', (eventRes: DuplicateScanResult) => {
         sub?.remove();
-        resolve(res);
+        resolve(eventRes);
       });
-      nativeModule.scanExactDuplicates(paths);
+      // safety timeout
+      setTimeout(() => {
+        sub?.remove();
+        resolve({ groups: [] });
+      }, 10000);
     });
   }
 
@@ -58,4 +84,49 @@ export async function calculateDHash(imagePath: string): Promise<string | null> 
     return await nativeModule.calculateDHash(imagePath);
   }
   return 'a4f89c02b1897e41';
+}
+
+export async function calculateBlurScore(imagePath: string): Promise<number> {
+  if (nativeModule?.calculateBlurScore) {
+    return await nativeModule.calculateBlurScore(imagePath);
+  }
+  return 125.4;
+}
+
+export async function scanBlurryPhotos(threshold: number = 100.0, paths: string[] = []): Promise<BlurryPhoto[]> {
+  if (nativeModule?.scanBlurryPhotos) {
+    return await nativeModule.scanBlurryPhotos(threshold, paths);
+  }
+  return [
+    {
+      path: '/storage/emulated/0/DCIM/Camera/IMG_20261014_183210_BLUR.jpg',
+      size: 3.2 * 1024 * 1024,
+      blurScore: 42.1,
+    },
+  ];
+}
+
+export async function scanSimilarPhotos(paths: string[] = [], maxHammingDistance: number = 10): Promise<SimilarPhotoGroup[]> {
+  if (nativeModule?.scanSimilarPhotos) {
+    return await nativeModule.scanSimilarPhotos(paths, maxHammingDistance);
+  }
+  return [
+    {
+      representative: '/storage/emulated/0/DCIM/Camera/IMG_20261015_091001.jpg',
+      files: [
+        {
+          path: '/storage/emulated/0/DCIM/Camera/IMG_20261015_091001.jpg',
+          size: 4.1 * 1024 * 1024,
+          dHash: 'a4f89c02b1897e41',
+          distance: 0,
+        },
+        {
+          path: '/storage/emulated/0/DCIM/Camera/IMG_20261015_091002.jpg',
+          size: 4.2 * 1024 * 1024,
+          dHash: 'a4f89c02b1897e43',
+          distance: 2,
+        },
+      ],
+    },
+  ];
 }

@@ -1,4 +1,4 @@
-import { Platform } from 'react-native';
+import { Platform, PermissionsAndroid } from 'react-native';
 import * as IntentLauncher from 'expo-intent-launcher';
 
 export interface PermissionDefinition {
@@ -54,14 +54,45 @@ export const APP_PERMISSIONS: PermissionDefinition[] = [
   },
 ];
 
+export async function requestStandardStoragePermissions(): Promise<boolean> {
+  if (Platform.OS !== 'android') return true;
+
+  try {
+    const apiLevel = Platform.Version as number;
+    if (apiLevel >= 33) {
+      const granted = await PermissionsAndroid.requestMultiple([
+        'android.permission.READ_MEDIA_IMAGES',
+        'android.permission.READ_MEDIA_VIDEO',
+        'android.permission.READ_MEDIA_AUDIO',
+      ] as any);
+      const res = granted as Record<string, string>;
+      return (
+        res['android.permission.READ_MEDIA_IMAGES'] === PermissionsAndroid.RESULTS.GRANTED ||
+        res['android.permission.READ_MEDIA_VIDEO'] === PermissionsAndroid.RESULTS.GRANTED
+      );
+    } else {
+      const granted = await PermissionsAndroid.requestMultiple([
+        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+      ]);
+      return granted[PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE] === PermissionsAndroid.RESULTS.GRANTED;
+    }
+  } catch (err) {
+    console.warn('requestStandardStoragePermissions error:', err);
+    return false;
+  }
+}
+
 export async function openSpecialPermissionSettings(permissionId: string): Promise<void> {
   if (Platform.OS !== 'android') return;
+
+  const pkg = 'com.krnl.core.direct';
 
   try {
     if (permissionId === 'storage_manage') {
       await IntentLauncher.startActivityAsync(
         'android.settings.MANAGE_APP_ALL_FILES_ACCESS_PERMISSION',
-        { data: 'package:com.krnl.core' }
+        { data: `package:${pkg}` }
       );
     } else if (permissionId === 'usage_stats') {
       await IntentLauncher.startActivityAsync(
@@ -70,14 +101,14 @@ export async function openSpecialPermissionSettings(permissionId: string): Promi
     } else {
       await IntentLauncher.startActivityAsync(
         IntentLauncher.ActivityAction.APPLICATION_DETAILS_SETTINGS,
-        { data: 'package:com.krnl.core' }
+        { data: `package:${pkg}` }
       );
     }
   } catch {
     // Fallback to app details
     await IntentLauncher.startActivityAsync(
       IntentLauncher.ActivityAction.APPLICATION_DETAILS_SETTINGS,
-      { data: 'package:com.krnl.core' }
+      { data: `package:${pkg}` }
     ).catch(() => {});
   }
 }

@@ -1,12 +1,13 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeStore } from '../design/store';
-import { APP_PERMISSIONS, openSpecialPermissionSettings, PermissionDefinition } from '../services/permissions';
+import { APP_PERMISSIONS, openSpecialPermissionSettings } from '../services/permissions';
 import { HudCard } from '../components/HudCard';
 import { HudButton } from '../components/HudButton';
-import { SPACING } from '../design/tokens';
+import { HudHeader } from '../components/HudHeader';
+import { SPACING, appSignature } from '../design/tokens';
 
 export default function OnboardingScreen() {
   const router = useRouter();
@@ -16,48 +17,80 @@ export default function OnboardingScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background, paddingTop: insets.top }]}>
-      <View style={[styles.topBar, { borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Text style={[styles.backText, { color: colors.textPrimary }]}>&lt; VOLTAR</Text>
-        </TouchableOpacity>
-        <Text style={[styles.title, { color: accentColor }]}>PERMISSÕES // TRANSPARÊNCIA</Text>
-      </View>
+      <HudHeader showBack title="PERMISSÕES // CONTROLE" subtitle="ACESSO MODULAR & PRIVACIDADE" />
 
-      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
-        <HudCard title="Princípio de Integridade">
-          <Text style={[styles.bodyText, { color: colors.textPrimary }]}>
-            O KRNL Core funciona parcialmente sem nenhuma permissão especial. Você decide
-            exatamente quais módulos liberar. Nenhum arquivo, foto ou dado de uso sai do aparelho.
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Hero Emblem Banner */}
+        <View style={styles.heroBox}>
+          <Image
+            source={require('../../assets/logo.png')}
+            style={styles.logoHero}
+            resizeMode="contain"
+            accessibilityLabel="Emblema KRNL CORE"
+          />
+          <Text style={[styles.heroTitle, { color: colors.textPrimary }]}>{appSignature}</Text>
+          <Text style={[styles.heroSubtitle, { color: accentColor }]}>
+            TRANSPARÊNCIA TOTAL // ZERO TELEMETRIA EXTERNA
+          </Text>
+        </View>
+
+        <HudCard
+          title="Princípio de Honestidade"
+          badge="OPCIONAL"
+          badgeVariant="ok"
+          subtitle="O app continua funcionando parcialmente sem permissões sensíveis"
+        >
+          <Text style={[styles.bodyText, { color: colors.textSecondary }]}>
+            Você decide exatamente quais módulos habilitar. Se preferir não conceder acesso a todos
+            os arquivos, o app continuará funcionando para auditoria de bateria, RAM e rede.
           </Text>
         </HudCard>
 
         {APP_PERMISSIONS.map((perm) => (
-          <HudCard key={perm.id} title={perm.name} badge={perm.isSpecialAccess ? 'ESPECIAL' : 'PADRÃO'}>
-            <Text style={[styles.desc, { color: colors.textPrimary }]}>{perm.description}</Text>
-            <View style={styles.justBox}>
+          <HudCard
+            key={perm.id}
+            title={perm.name}
+            badge={perm.isSpecialAccess ? 'ESPECIAL' : 'PADRÃO'}
+            subtitle={perm.description}
+          >
+            <View style={[styles.justBox, { borderColor: colors.border, backgroundColor: colors.surfaceAlt }]}>
               <Text style={[styles.justTitle, { color: accentColor }]}>POR QUE PRECISAMOS?</Text>
               <Text style={[styles.justText, { color: colors.textSecondary }]}>{perm.justification}</Text>
             </View>
+
             <View style={styles.tagsRow}>
               {perm.requiredFor.map((mod, i) => (
-                <View key={i} style={[styles.tag, { borderColor: colors.border }]}>
+                <View key={i} style={[styles.tag, { borderColor: colors.borderActive, backgroundColor: colors.surface }]}>
                   <Text style={[styles.tagText, { color: colors.textSecondary }]}>{mod}</Text>
                 </View>
               ))}
             </View>
-            <HudButton
-              label={`CONFIGURAR NO ANDROID`}
-              variant="secondary"
-              onPress={() => openSpecialPermissionSettings(perm.id)}
-            />
+
+            <View style={styles.btnRow}>
+              <HudButton
+                label="CONCEDER"
+                variant="primary"
+                style={{ flex: 1, marginRight: 6 }}
+                onPress={() => openSpecialPermissionSettings(perm.id)}
+              />
+              <HudButton
+                label="AGORA NÃO"
+                variant="ghost"
+                style={{ flex: 1 }}
+                onPress={() => {}}
+              />
+            </View>
           </HudCard>
         ))}
 
         <HudButton
-          label="CONCLUIR E RETORNAR AO PAINEL"
+          label="CONCLUIR E ACESSAR O PAINEL"
           variant="primary"
           style={{ marginTop: SPACING.md }}
-          onPress={() => router.replace('/')}
+          onPress={() => router.replace('/(tabs)')}
         />
       </ScrollView>
     </View>
@@ -65,74 +98,72 @@ export default function OnboardingScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-  },
-  topBar: {
-    flexDirection: 'row',
+  screen: { flex: 1 },
+  content: { padding: SPACING.md },
+  heroBox: {
     alignItems: 'center',
-    paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.md,
-    borderBottomWidth: 1,
   },
-  backButton: {
-    marginRight: SPACING.md,
+  logoHero: {
+    width: 120,
+    height: 120,
+    marginBottom: SPACING.xs,
   },
-  backText: {
+  heroTitle: {
+    fontSize: 16,
     fontFamily: 'monospace',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  title: {
-    fontFamily: 'monospace',
-    fontSize: 12,
     fontWeight: '900',
-    letterSpacing: 1.5,
+    letterSpacing: 2,
   },
-  content: {
-    padding: SPACING.md,
+  heroSubtitle: {
+    fontSize: 10,
+    fontFamily: 'monospace',
+    fontWeight: '800',
+    letterSpacing: 1,
+    marginTop: 2,
   },
   bodyText: {
     fontFamily: 'monospace',
     fontSize: 11,
-    lineHeight: 18,
-  },
-  desc: {
-    fontFamily: 'monospace',
-    fontSize: 12,
-    marginBottom: SPACING.xs,
+    lineHeight: 16,
   },
   justBox: {
-    backgroundColor: '#0F0F0F',
+    borderWidth: 1,
     padding: SPACING.sm,
     marginVertical: SPACING.xs,
-    borderLeftWidth: 2,
-    borderLeftColor: '#333333',
+    borderRadius: 2,
   },
   justTitle: {
-    fontFamily: 'monospace',
     fontSize: 9,
-    fontWeight: '700',
-    marginBottom: 2,
+    fontFamily: 'monospace',
+    fontWeight: '900',
+    letterSpacing: 0.8,
   },
   justText: {
-    fontFamily: 'monospace',
     fontSize: 10,
-    lineHeight: 15,
+    fontFamily: 'monospace',
+    marginTop: 2,
+    lineHeight: 14,
   },
   tagsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 4,
+    gap: 6,
     marginVertical: SPACING.xs,
   },
   tag: {
     borderWidth: 1,
     paddingHorizontal: 6,
     paddingVertical: 2,
+    borderRadius: 2,
   },
   tagText: {
+    fontSize: 8,
     fontFamily: 'monospace',
-    fontSize: 9,
+    fontWeight: '700',
+  },
+  btnRow: {
+    flexDirection: 'row',
+    marginTop: SPACING.xs,
   },
 });
